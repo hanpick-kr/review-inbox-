@@ -141,6 +141,10 @@
       <button class="btn-copy" data-copy="resultZh">中文만 복사</button>
       <button class="btn-primary" id="copyBothBtn" style="width:auto;margin-top:0">한/중 같이 복사</button>
     </div>
+    <label for="reviseInput" style="margin-top:14px">이 결과를 어떻게 더 고칠까요?</label>
+    <textarea id="reviseInput" style="min-height:44px" placeholder="예: 반말로 바꿔줘, 더 짧게, 마지막 문장 빼줘"></textarea>
+    <button id="reviseBtn" class="btn-primary">이 방향으로 다시 정제</button>
+    <p id="reviseStatus" class="hint"></p>
   </div>
 
   <p class="section-title">지난 리뷰</p>
@@ -169,9 +173,13 @@ const resultCard = document.getElementById("resultCard");
 const resultKo = document.getElementById("resultKo");
 const resultZh = document.getElementById("resultZh");
 const copyBothBtn = document.getElementById("copyBothBtn");
+const reviseInput = document.getElementById("reviseInput");
+const reviseBtn = document.getElementById("reviseBtn");
+const reviseStatus = document.getElementById("reviseStatus");
 const listEl = document.getElementById("list");
 
 let currentTab = "pending";
+let currentReviewId = null;
 
 submitBtn.addEventListener("click", async () => {
   const text = rawInput.value.trim();
@@ -196,6 +204,9 @@ submitBtn.addEventListener("click", async () => {
     }
     resultKo.value = data.refined_ko || "(정제 실패, 원문 그대로 저장됨)";
     resultZh.value = data.refined_zh || "(정제 실패, 원문 그대로 저장됨)";
+    currentReviewId = data.id || null;
+    reviseInput.value = "";
+    reviseStatus.textContent = "";
     resultCard.style.display = "block";
     submitStatus.textContent = "완료!";
     rawInput.value = "";
@@ -216,6 +227,37 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
 
 copyBothBtn.addEventListener("click", () => {
   navigator.clipboard.writeText(resultKo.value + "\n\n" + resultZh.value);
+});
+
+reviseBtn.addEventListener("click", async () => {
+  const instruction = reviseInput.value.trim();
+  if (!instruction) return;
+  reviseBtn.disabled = true;
+  reviseStatus.textContent = "다시 정제 중...";
+  try {
+    const res = await fetch(INGEST_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + INGEST_SECRET,
+      },
+      body: JSON.stringify({ mode: "revise", ko: resultKo.value, style: instruction, id: currentReviewId }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      reviseStatus.textContent = "오류: " + (data.error || res.status);
+      return;
+    }
+    resultKo.value = data.refined_ko;
+    resultZh.value = data.refined_zh;
+    reviseStatus.textContent = "반영 완료!";
+    reviseInput.value = "";
+    loadReviews();
+  } catch (e) {
+    reviseStatus.textContent = "오류: " + e.message;
+  } finally {
+    reviseBtn.disabled = false;
+  }
 });
 
 document.querySelectorAll(".tab").forEach((tab) => {
