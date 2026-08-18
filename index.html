@@ -235,7 +235,7 @@ document.getElementById("sendLinkBtn").addEventListener("click", async () => {
   loginStatusEl.textContent = "전송 중...";
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: window.location.href.split("?")[0].split("#")[0] },
   });
   loginStatusEl.textContent = error ? "오류: " + error.message : "이메일을 확인해주세요. 링크를 눌러 로그인하세요.";
 });
