@@ -17,7 +17,6 @@
     --text: #1c1530;
     --muted: #6b6480;
     --accent: #4c2c8f;
-    --accent-2: #7c5cff;
     --border: #e6e1f5;
     --pending: #ff9f43;
     --confirmed: #2ecc71;
@@ -29,7 +28,6 @@
       --text: #f1eefb;
       --muted: #a79ecb;
       --accent: #a78bfa;
-      --accent-2: #7c5cff;
       --border: #322a4a;
     }
   }
@@ -46,13 +44,52 @@
     top: 0;
     background: var(--bg);
     padding: calc(env(safe-area-inset-top) + 16px) 20px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     z-index: 10;
   }
   h1 { font-size: 20px; margin: 0; }
-  .tabs { display: flex; gap: 8px; padding: 0 20px 12px; }
+  main { padding: 0 20px; display: flex; flex-direction: column; gap: 14px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  label { font-size: 12px; color: var(--muted); display: block; margin: 0 0 6px; }
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 10px;
+    font-size: 15px;
+    background: transparent;
+    color: var(--text);
+    resize: vertical;
+    font-family: inherit;
+  }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  button {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: white; width: 100%; margin-top: 10px; font-weight: 600; }
+  .btn-primary:disabled { opacity: 0.5; }
+  .btn-copy { background: var(--border); color: var(--text); }
+  #resultCard { display: none; }
+  .field-label { font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  .result-text {
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.5;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 6px;
+  }
+  .tabs { display: flex; gap: 8px; padding: 4px 0; }
   .tab {
     flex: 1;
     text-align: center;
@@ -65,184 +102,108 @@
     cursor: pointer;
   }
   .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
-  main { padding: 0 20px; display: flex; flex-direction: column; gap: 14px; }
-  .card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-  }
-  .card .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; color: white; }
   .badge.pending { background: var(--pending); }
   .badge.confirmed { background: var(--confirmed); }
+  .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .date { font-size: 12px; color: var(--muted); }
   .raw { font-size: 13px; color: var(--muted); margin-bottom: 10px; white-space: pre-wrap; }
-  label { font-size: 12px; color: var(--muted); display: block; margin: 8px 0 4px; }
-  textarea {
-    width: 100%;
-    min-height: 64px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    padding: 10px;
-    font-size: 14px;
-    background: transparent;
-    color: var(--text);
-    resize: vertical;
-    font-family: inherit;
-  }
-  .btnrow { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  button {
-    border: none;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .btn-copy { background: var(--border); color: var(--text); }
+  .btnrow { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .btn-confirm { background: var(--accent); color: white; }
   .btn-confirm:disabled { opacity: 0.5; }
-  #login {
-    max-width: 360px;
-    margin: 80px auto;
-    padding: 24px;
-    text-align: center;
-  }
-  #login input {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-size: 14px;
-    margin: 12px 0;
-  }
-  #login button { width: 100%; background: var(--accent); color: white; padding: 12px; }
-  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
-  .empty { text-align: center; color: var(--muted); padding: 60px 20px; font-size: 14px; }
-  #notifyBar {
-    margin: 0 20px 14px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: var(--accent);
-    color: white;
-    font-size: 13px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-  }
-  #notifyBar button { background: white; color: var(--accent); }
-  .hidden { display: none !important; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 14px; }
+  .section-title { font-size: 15px; font-weight: 600; margin: 6px 0 0; }
 </style>
 </head>
 <body>
 
-<div id="login" class="hidden">
+<header>
   <h1>리뷰인박스</h1>
-  <p class="hint">이메일로 로그인 링크를 보내드려요.</p>
-  <input id="emailInput" type="email" placeholder="you@example.com" />
-  <button id="sendLinkBtn">로그인 링크 받기</button>
-  <p id="loginStatus" class="hint"></p>
-</div>
+</header>
 
-<div id="appRoot" class="hidden">
-  <header>
-    <h1>리뷰인박스</h1>
-    <button id="logoutBtn" class="btn-copy">로그아웃</button>
-  </header>
-  <div id="notifyBar" class="hidden">
-    <span>새 리뷰 알림을 받으려면 알림을 켜주세요</span>
-    <button id="enableNotifyBtn">알림 켜기</button>
+<main>
+  <div class="card">
+    <label for="rawInput">새 리뷰 (키보드의 마이크 버튼으로 받아쓰기 가능)</label>
+    <textarea id="rawInput" placeholder="오늘 다녀온 곳 어땠는지 말씀해주세요..."></textarea>
+    <button id="submitBtn" class="btn-primary">정제하기</button>
+    <p id="submitStatus" class="hint"></p>
   </div>
+
+  <div class="card" id="resultCard">
+    <div class="field-label">한국어</div>
+    <div class="result-text" id="resultKo"></div>
+    <button class="btn-copy" data-copy="resultKo">한국어 복사</button>
+    <div class="field-label">中文</div>
+    <div class="result-text" id="resultZh"></div>
+    <button class="btn-copy" data-copy="resultZh">中文 복사</button>
+  </div>
+
+  <p class="section-title">지난 리뷰</p>
   <div class="tabs">
     <div class="tab active" data-status="pending">대기중</div>
     <div class="tab" data-status="confirmed">확정됨</div>
   </div>
-  <main id="list"></main>
-</div>
+  <div id="list"></div>
+</main>
 
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = "https://nuvwfcecaafgpksnvizd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_pnA8OfMO3-3mF7J-UNtbgQ_zv7SMKsE";
-const VAPID_PUBLIC_KEY = "BIN-zo7WCD8WQ_qLnc8P279zzYxCXJPLTzdoRuHs4xbcC6oqky8VAebeJ7ljbXdTLk7jsnV0aVWmcOBEM6PesYQ";
+const INGEST_URL = "https://nuvwfcecaafgpksnvizd.supabase.co/functions/v1/ingest-review";
+const INGEST_SECRET = "9c57e02bdb4d39b16ea14391e5c5873c89f50ee118e86d5460f8bd1fec8e8be5";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const loginEl = document.getElementById("login");
-const appRootEl = document.getElementById("appRoot");
+const rawInput = document.getElementById("rawInput");
+const submitBtn = document.getElementById("submitBtn");
+const submitStatus = document.getElementById("submitStatus");
+const resultCard = document.getElementById("resultCard");
+const resultKo = document.getElementById("resultKo");
+const resultZh = document.getElementById("resultZh");
 const listEl = document.getElementById("list");
-const loginStatusEl = document.getElementById("loginStatus");
-const notifyBarEl = document.getElementById("notifyBar");
 
 let currentTab = "pending";
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
-  return outputArray;
-}
-
-async function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) return null;
-  return await navigator.serviceWorker.register("sw.js");
-}
-
-async function checkNotifyState() {
-  if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-    notifyBarEl.classList.add("hidden");
-    return;
+submitBtn.addEventListener("click", async () => {
+  const text = rawInput.value.trim();
+  if (!text) return;
+  submitBtn.disabled = true;
+  submitStatus.textContent = "정제 중...";
+  resultCard.style.display = "none";
+  try {
+    const res = await fetch(INGEST_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + INGEST_SECRET,
+      },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      submitStatus.textContent = "오류: " + (data.error || res.status);
+      return;
+    }
+    resultKo.textContent = data.refined_ko || "(정제 실패, 원문 그대로 저장됨)";
+    resultZh.textContent = data.refined_zh || "(정제 실패, 원문 그대로 저장됨)";
+    resultCard.style.display = "block";
+    submitStatus.textContent = "완료!";
+    rawInput.value = "";
+    loadReviews();
+  } catch (e) {
+    submitStatus.textContent = "오류: " + e.message;
+  } finally {
+    submitBtn.disabled = false;
   }
-  if (Notification.permission === "granted") {
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    notifyBarEl.classList.toggle("hidden", !!sub);
-  } else {
-    notifyBarEl.classList.remove("hidden");
-  }
-}
-
-async function enableNotifications() {
-  const perm = await Notification.requestPermission();
-  if (perm !== "granted") return;
-  const reg = await navigator.serviceWorker.ready;
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
-  const json = sub.toJSON();
-  await supabase.from("push_subscriptions").insert({
-    endpoint: json.endpoint,
-    p256dh: json.keys.p256dh,
-    auth: json.keys.auth,
-  });
-  notifyBarEl.classList.add("hidden");
-}
-
-document.getElementById("enableNotifyBtn").addEventListener("click", () => {
-  enableNotifications().catch((e) => alert("알림 설정 실패: " + e.message));
 });
 
-document.getElementById("sendLinkBtn").addEventListener("click", async () => {
-  const email = document.getElementById("emailInput").value.trim();
-  if (!email) return;
-  loginStatusEl.textContent = "전송 중...";
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href.split("?")[0].split("#")[0] },
+document.querySelectorAll("[data-copy]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const el = document.getElementById(btn.dataset.copy);
+    navigator.clipboard.writeText(el.textContent);
   });
-  loginStatusEl.textContent = error ? "오류: " + error.message : "이메일을 확인해주세요. 링크를 눌러 로그인하세요.";
-});
-
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  showLogin();
 });
 
 document.querySelectorAll(".tab").forEach((tab) => {
@@ -293,10 +254,10 @@ function renderCard(review) {
       <span class="date">${formatDate(review.created_at)}</span>
     </div>
     <div class="raw">${escapeHtml(review.raw_text)}</div>
-    <label>한국어</label>
-    <textarea data-field="refined_ko">${escapeHtml(review.refined_ko)}</textarea>
-    <label>中文</label>
-    <textarea data-field="refined_zh">${escapeHtml(review.refined_zh)}</textarea>
+    <div class="field-label">한국어</div>
+    <div class="result-text">${escapeHtml(review.refined_ko)}</div>
+    <div class="field-label">中文</div>
+    <div class="result-text">${escapeHtml(review.refined_zh)}</div>
     <div class="btnrow">
       <button class="btn-copy" data-action="copy-ko">한국어 복사</button>
       <button class="btn-copy" data-action="copy-zh">中文 복사</button>
@@ -304,14 +265,11 @@ function renderCard(review) {
     </div>
   `;
 
-  const koArea = card.querySelector('[data-field="refined_ko"]');
-  const zhArea = card.querySelector('[data-field="refined_zh"]');
-
   card.querySelector('[data-action="copy-ko"]').addEventListener("click", () => {
-    navigator.clipboard.writeText(koArea.value);
+    navigator.clipboard.writeText(review.refined_ko || "");
   });
   card.querySelector('[data-action="copy-zh"]').addEventListener("click", () => {
-    navigator.clipboard.writeText(zhArea.value);
+    navigator.clipboard.writeText(review.refined_zh || "");
   });
   const confirmBtn = card.querySelector('[data-action="confirm"]');
   if (confirmBtn) {
@@ -319,12 +277,7 @@ function renderCard(review) {
       confirmBtn.disabled = true;
       const { error } = await supabase
         .from("reviews")
-        .update({
-          status: "confirmed",
-          confirmed_at: new Date().toISOString(),
-          refined_ko: koArea.value,
-          refined_zh: zhArea.value,
-        })
+        .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
         .eq("id", review.id);
       if (error) {
         alert("확정 실패: " + error.message);
@@ -337,33 +290,7 @@ function renderCard(review) {
   return card;
 }
 
-function showLogin() {
-  loginEl.classList.remove("hidden");
-  appRootEl.classList.add("hidden");
-}
-
-function showApp() {
-  loginEl.classList.add("hidden");
-  appRootEl.classList.remove("hidden");
-  loadReviews();
-  checkNotifyState();
-}
-
-async function init() {
-  await registerServiceWorker();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    showApp();
-  } else {
-    showLogin();
-  }
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (session) showApp();
-    else showLogin();
-  });
-}
-
-init();
+loadReviews();
 </script>
 </body>
 </html>
