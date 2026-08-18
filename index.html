@@ -125,17 +125,22 @@
   <div class="card">
     <label for="rawInput">새 리뷰 (키보드의 마이크 버튼으로 받아쓰기 가능)</label>
     <textarea id="rawInput" placeholder="오늘 다녀온 곳 어땠는지 말씀해주세요..."></textarea>
+    <label for="styleInput" style="margin-top:10px">추가 지시사항 (선택 — 예: 반말로, 이모지 빼줘, 더 짧게)</label>
+    <textarea id="styleInput" style="min-height:44px" placeholder="비워두면 기본 톤으로 정제해요"></textarea>
     <button id="submitBtn" class="btn-primary">정제하기</button>
     <p id="submitStatus" class="hint"></p>
   </div>
 
   <div class="card" id="resultCard">
-    <div class="field-label">한국어</div>
-    <div class="result-text" id="resultKo"></div>
-    <button class="btn-copy" data-copy="resultKo">한국어 복사</button>
-    <div class="field-label">中文</div>
-    <div class="result-text" id="resultZh"></div>
-    <button class="btn-copy" data-copy="resultZh">中文 복사</button>
+    <div class="field-label">한국어 (직접 수정 가능)</div>
+    <textarea class="result-text" id="resultKo" rows="4"></textarea>
+    <div class="field-label">中文 (직접 수정 가능)</div>
+    <textarea class="result-text" id="resultZh" rows="4"></textarea>
+    <div class="btnrow">
+      <button class="btn-copy" data-copy="resultKo">한국어만 복사</button>
+      <button class="btn-copy" data-copy="resultZh">中文만 복사</button>
+      <button class="btn-primary" id="copyBothBtn" style="width:auto;margin-top:0">한/중 같이 복사</button>
+    </div>
   </div>
 
   <p class="section-title">지난 리뷰</p>
@@ -157,17 +162,20 @@ const INGEST_SECRET = "9c57e02bdb4d39b16ea14391e5c5873c89f50ee118e86d5460f8bd1fe
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const rawInput = document.getElementById("rawInput");
+const styleInput = document.getElementById("styleInput");
 const submitBtn = document.getElementById("submitBtn");
 const submitStatus = document.getElementById("submitStatus");
 const resultCard = document.getElementById("resultCard");
 const resultKo = document.getElementById("resultKo");
 const resultZh = document.getElementById("resultZh");
+const copyBothBtn = document.getElementById("copyBothBtn");
 const listEl = document.getElementById("list");
 
 let currentTab = "pending";
 
 submitBtn.addEventListener("click", async () => {
   const text = rawInput.value.trim();
+  const style = styleInput.value.trim();
   if (!text) return;
   submitBtn.disabled = true;
   submitStatus.textContent = "정제 중...";
@@ -179,15 +187,15 @@ submitBtn.addEventListener("click", async () => {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + INGEST_SECRET,
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, style }),
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
       submitStatus.textContent = "오류: " + (data.error || res.status);
       return;
     }
-    resultKo.textContent = data.refined_ko || "(정제 실패, 원문 그대로 저장됨)";
-    resultZh.textContent = data.refined_zh || "(정제 실패, 원문 그대로 저장됨)";
+    resultKo.value = data.refined_ko || "(정제 실패, 원문 그대로 저장됨)";
+    resultZh.value = data.refined_zh || "(정제 실패, 원문 그대로 저장됨)";
     resultCard.style.display = "block";
     submitStatus.textContent = "완료!";
     rawInput.value = "";
@@ -202,8 +210,12 @@ submitBtn.addEventListener("click", async () => {
 document.querySelectorAll("[data-copy]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const el = document.getElementById(btn.dataset.copy);
-    navigator.clipboard.writeText(el.textContent);
+    navigator.clipboard.writeText(el.value);
   });
+});
+
+copyBothBtn.addEventListener("click", () => {
+  navigator.clipboard.writeText(resultKo.value + "\n\n" + resultZh.value);
 });
 
 document.querySelectorAll(".tab").forEach((tab) => {
@@ -261,6 +273,7 @@ function renderCard(review) {
     <div class="btnrow">
       <button class="btn-copy" data-action="copy-ko">한국어 복사</button>
       <button class="btn-copy" data-action="copy-zh">中文 복사</button>
+      <button class="btn-copy" data-action="copy-both">한/중 같이 복사</button>
       ${review.status === "pending" ? '<button class="btn-confirm" data-action="confirm">확정</button>' : ""}
     </div>
   `;
@@ -270,6 +283,9 @@ function renderCard(review) {
   });
   card.querySelector('[data-action="copy-zh"]').addEventListener("click", () => {
     navigator.clipboard.writeText(review.refined_zh || "");
+  });
+  card.querySelector('[data-action="copy-both"]').addEventListener("click", () => {
+    navigator.clipboard.writeText((review.refined_ko || "") + "\n\n" + (review.refined_zh || ""));
   });
   const confirmBtn = card.querySelector('[data-action="confirm"]');
   if (confirmBtn) {
